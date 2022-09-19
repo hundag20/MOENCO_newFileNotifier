@@ -23,5 +23,5 @@ try {
   })();
 } catch (err) {
   //TODO: log to file
-  console.log(`Error: ${err.message}`); // error message will include 'example-client'
+  console.log(`Error: ${err.message}`);
 }
