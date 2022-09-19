@@ -7,12 +7,12 @@ exports.up = function (knex) {
     .createTable("list", function (table) {
       table.increments("id");
       table.integer("filesAmount");
-      table.timestamps("time_stamp");
+      table.timestamps(false, true);
     })
     .createTable("filesjsons", function (table) {
       table.increments("id");
       table.json("fileJson");
-      table.timestamps("time_stamp");
+      table.timestamps(false, true);
     });
 };
 
