@@ -69,7 +69,6 @@ exports.listenForNewEntries = async () => {
             await sftp.fastGet(el, `./temp/${el.split("data/")[1]}`);
             console.log("file saved: ", el.split("data/")[1]);
             fs.close(fd);
-            // });
           }
 
           //email new files
@@ -112,13 +111,10 @@ exports.listenForNewEntries = async () => {
             await FileJson.query().insert({ fileJson: el });
           });
           console.log("new files added to filesJsons table");
-
-          //recursive
-          recursiveFunc();
-        } else {
-          //recursive
-          recursiveFunc();
         }
+
+        //recursive
+        recursiveFunc();
       } else if (listLength < prevListLength2) {
         //deleted
         console.log("file deleted");
