@@ -16,10 +16,11 @@ try {
     sftp.on("error", (err) => err);
     console.log(`Remote working directory is ${p}`);
 
-    // return sftp.end();
     module.exports = { sftp };
 
     listenForNewEntries();
+    // .then(() => sftp.end());
+    // return
   })();
 } catch (err) {
   //TODO: log to file

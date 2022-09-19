@@ -15,7 +15,7 @@ exports.listenForNewEntries = async () => {
   const List = require("./models/list");
   const { sftp } = require(".");
 
-  const func = async () => {
+  const recursiveFunc = async () => {
     try {
       const lists = await List.query()
         .findById(1)
@@ -31,11 +31,6 @@ exports.listenForNewEntries = async () => {
       if (listLength > prevListLength2) {
         //update listLength.txt
         console.log("new file added");
-        await List.query().findById(1).patch({
-          filesAmount: listLength,
-        });
-        console.log("length updated after new files added");
-
         const fileList = await sftp.list("/data");
 
         let prevFileList = await FileJson.query();
@@ -49,7 +44,7 @@ exports.listenForNewEntries = async () => {
         if (prevFileList.length < 1) {
           newFiles = fileList;
         } else {
-          newFiles = fileList.filter((el) => {
+          newFiles = fileList.filter((el, i) => {
             //new files will be filtered out based on name and size matching
             if (
               prevFileList.some(
@@ -68,15 +63,14 @@ exports.listenForNewEntries = async () => {
           //download new files
           const remotePaths = newFiles.map((el) => `/data/${el.name}`);
           console.log("remotePaths", remotePaths);
-          remotePaths.map(async (el) => {
-            fs.open(`./temp/${el.split("data/")[1]}`, "w", async (err) => {
-              if (err) console.log(err);
-              await sftp
-                .fastGet(el, `./temp/${el.split("data/")[1]}`)
-                .then(() => console.log("file saved: ", el.split("data/")[1]))
-                .catch((err) => console.log("err,", err));
-            });
-          });
+          for (el of remotePaths) {
+            const fd = fs.openSync(`./temp/${el.split("data/")[1]}`, "w");
+
+            await sftp.fastGet(el, `./temp/${el.split("data/")[1]}`);
+            console.log("file saved: ", el.split("data/")[1]);
+            fs.close(fd);
+            // });
+          }
 
           //email new files
           const filesToMail = remotePaths.map((el) => {
@@ -97,7 +91,7 @@ exports.listenForNewEntries = async () => {
             newReport.attachments
           );
 
-          //delete new files
+          //delete new files();
           remotePaths.forEach(async (el) => {
             fs.unlink(`./temp/${el.split("data/")[1]}`, (err) => {
               if (err) console.log(err);
@@ -105,13 +99,25 @@ exports.listenForNewEntries = async () => {
             });
           });
 
-          //update fileList.js
+          //update list
+          await List.query().findById(1).patch({
+            filesAmount: listLength,
+          });
+          console.log("length updated after new files added");
+
+          //update jsonFiles
           const files =
             prevFileList.length > 0 ? [prevFileList, newFiles] : newFiles;
           files.forEach(async (el) => {
             await FileJson.query().insert({ fileJson: el });
           });
           console.log("new files added to filesJsons table");
+
+          //recursive
+          recursiveFunc();
+        } else {
+          //recursive
+          recursiveFunc();
         }
       } else if (listLength < prevListLength2) {
         //deleted
@@ -120,10 +126,19 @@ exports.listenForNewEntries = async () => {
           filesAmount: listLength,
         });
         console.log("length table updated after delete");
+
+        //recursive
+        recursiveFunc();
       }
     } catch (err) {
       console.log("err caught by try/catch: ", err);
     }
+
+    //recursive
+    recursiveFunc();
   };
-  setInterval(func, 3000);
+
+  recursiveFunc();
 };
+//FIXME: sftp.end not being recognized
+//BUG: updated_at not updating timeStamp
