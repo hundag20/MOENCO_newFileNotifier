@@ -10,6 +10,17 @@ const REPORT = {
   to: "subscriber for new file updates",
 };
 //email client for outlook has to add sender adress to safe adresses
+const date = new Date();
+const current_time = {
+  date: date.getDate(),
+  day: date.getDay(),
+  year: date.getFullYear(),
+  month: date.getMonth(),
+  hour: date.getHours(),
+  minute: date.getMinutes(),
+  second: date.getSeconds(),
+};
+const now = `${current_time.year}-${current_time.month}-${current_time.date} ${current_time.hour}:${current_time.minute}:${current_time.second}`;
 
 exports.listenForNewEntries = async () => {
   const List = require("./models/list");
@@ -101,6 +112,7 @@ exports.listenForNewEntries = async () => {
           //update list
           await List.query().findById(1).patch({
             filesAmount: listLength,
+            updated_at: now,
           });
           console.log("length updated after new files added");
 
@@ -137,4 +149,3 @@ exports.listenForNewEntries = async () => {
   recursiveFunc();
 };
 //FIXME: sftp.end not being recognized
-//BUG: updated_at not updating timeStamp
